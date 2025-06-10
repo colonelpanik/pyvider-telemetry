@@ -5,11 +5,11 @@
 Tests specifically designed to increase code coverage by targeting edge cases
 and error-handling paths identified in coverage reports.
 """
+from collections.abc import Callable
 import io
 import json
 import logging as stdlib_logging
 import os
-from typing import Any, Callable
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -20,7 +20,6 @@ from pyvider.telemetry import (
     SemanticLayer,
     TelemetryConfig,
     logger,
-    setup_telemetry,
 )
 from pyvider.telemetry.config import _build_formatter_processors_list
 from pyvider.telemetry.core import (
@@ -29,11 +28,9 @@ from pyvider.telemetry.core import (
 )
 from pyvider.telemetry.logger import base as pyvider_logger_base
 from pyvider.telemetry.logger.custom_processors import (
-    _EMOJI_CACHE_SIZE_LIMIT,
     add_log_level_custom,
 )
 from pyvider.telemetry.logger.emoji_matrix import show_emoji_matrix
-
 
 # --- Tests for src/pyvider/telemetry/config.py ---
 

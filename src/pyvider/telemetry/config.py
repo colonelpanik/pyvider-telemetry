@@ -184,7 +184,7 @@ class TelemetryConfig:
                     config_warnings_logger.warning(f"⚙️➡️⚠️ Error parsing data for a custom layer: {e}. Skipping item.")
         except json.JSONDecodeError:
             _ensure_config_logger_handler(config_warnings_logger)
-            config_warnings_logger.warning(f"⚙️➡️⚠️ Invalid JSON in PYVIDER_LOG_CUSTOM_SEMANTIC_LAYERS. Using empty list.")
+            config_warnings_logger.warning("⚙️➡️⚠️ Invalid JSON in PYVIDER_LOG_CUSTOM_SEMANTIC_LAYERS. Using empty list.")
         return custom_semantic_layers
 
     @staticmethod
@@ -203,7 +203,7 @@ class TelemetryConfig:
                     config_warnings_logger.warning(f"⚙️➡️⚠️ Error parsing data for an emoji set: {e}. Skipping item.")
         except json.JSONDecodeError:
             _ensure_config_logger_handler(config_warnings_logger)
-            config_warnings_logger.warning(f"⚙️➡️⚠️ Invalid JSON in PYVIDER_LOG_USER_DEFINED_EMOJI_SETS. Using empty list.")
+            config_warnings_logger.warning("⚙️➡️⚠️ Invalid JSON in PYVIDER_LOG_USER_DEFINED_EMOJI_SETS. Using empty list.")
         return user_defined_emoji_sets
 
     @staticmethod
@@ -260,12 +260,16 @@ def _config_create_emoji_processors(logging_config: LoggingConfig, resolved_sema
     if logging_config.das_emoji_prefix_enabled:
         # FIX: Create the processor as a closure with the resolved config
         resolved_field_definitions, resolved_emoji_sets_lookup = resolved_semantic_config
-        
+
         def add_das_emoji_prefix_closure(_logger: Any, _method_name: str, event_dict: structlog.types.EventDict) -> structlog.types.EventDict:
             # This inner function now has access to the resolved config from its closure scope
-            from pyvider.telemetry.logger.emoji_matrix import PRIMARY_EMOJI, SECONDARY_EMOJI, TERTIARY_EMOJI
+            from pyvider.telemetry.logger.emoji_matrix import (
+                PRIMARY_EMOJI,
+                SECONDARY_EMOJI,
+                TERTIARY_EMOJI,
+            )
             final_das_prefix_parts: list[str] = []
-            
+
             if resolved_field_definitions: # New Layered Semantic System is active
                 for field_def in resolved_field_definitions:
                     value_from_event = event_dict.get(field_def.log_key)
@@ -296,7 +300,7 @@ def _config_create_emoji_processors(logging_config: LoggingConfig, resolved_sema
                 event_msg = event_dict.get("event")
                 event_dict["event"] = f"{final_das_prefix_str} {event_msg}" if event_msg is not None else final_das_prefix_str
             return event_dict
-        
+
         processors.append(cast(StructlogProcessor, add_das_emoji_prefix_closure))
     return processors
 

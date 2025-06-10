@@ -33,8 +33,8 @@ class PyviderLogger:
     def __init__(self) -> None:
         self._internal_logger = structlog.get_logger().bind(logger_name=f"{self.__class__.__module__}.{self.__class__.__name__}")
         self._is_configured_by_setup: bool = False
-        self._active_config: "TelemetryConfig | None" = None
-        self._active_resolved_semantic_config: "ResolvedSemanticConfig | None" = None
+        self._active_config: TelemetryConfig | None = None
+        self._active_resolved_semantic_config: ResolvedSemanticConfig | None = None
 
     def _check_structlog_already_disabled(self) -> bool:
         try:

@@ -15,6 +15,7 @@ from pytest import CaptureFixture, MonkeyPatch
 from pyvider.telemetry import (
     LoggingConfig,
     TelemetryConfig,
+    logger as global_logger,
 )
 
 
@@ -25,7 +26,8 @@ def assert_log_output(output: str, expected_level: str, expected_message_core: s
     actual_log_lines = _filter_application_logs(output)
     is_expecting_empty = not expected_level and not expected_message_core and not expected_kvs and not expect_traceback_containing
     if is_expecting_empty:
-        if not actual_log_lines: return
+        if not actual_log_lines:
+            return
         raise AssertionError(f"Expected no application log output, but found lines:\n{actual_log_lines}")
     if not actual_log_lines:
         raise AssertionError(f"No application log lines found. Full Raw Output:\n{output}")
@@ -46,29 +48,40 @@ def _validate_json_log_line(line: str, expected_level: str, expected_message: st
     try:
         log_json = json.loads(line)
         if expect_timestamp:
-            if "timestamp" not in log_json: return False
+            if "timestamp" not in log_json:
+                return False
         else:
-            if "timestamp" in log_json: return False
-        if log_json.get("level") != expected_level.lower(): return False
-        if log_json.get("event") != expected_message: return False
+            if "timestamp" in log_json:
+                return False
+        if log_json.get("level") != expected_level.lower():
+            return False
+        if log_json.get("event") != expected_message:
+            return False
         if expected_kvs:
             for k, v_expected in expected_kvs.items():
-                if log_json.get(k) != v_expected: return False
+                if log_json.get(k) != v_expected:
+                    return False
         return True
-    except json.JSONDecodeError: return False
+    except json.JSONDecodeError:
+        return False
 
 def _validate_keyvalue_log_line(line: str, expected_level: str, expected_message: str, expected_kvs: dict[str, Any] | None = None, expect_timestamp: bool = True) -> bool:
     has_timestamp = re.match(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}", line)
-    if expect_timestamp and not has_timestamp: return False
-    if not expect_timestamp and has_timestamp: return False
-    if not re.search(rf"\[\s*{re.escape(expected_level)}\s*\]", line, re.IGNORECASE): return False
+    if expect_timestamp and not has_timestamp:
+        return False
+    if not expect_timestamp and has_timestamp:
+        return False
+    if not re.search(rf"\[\s*{re.escape(expected_level)}\s*\]", line, re.IGNORECASE):
+        return False
     # Check if the core message is a substring of the line
-    if expected_message not in line: return False
+    if expected_message not in line:
+        return False
     if expected_kvs:
         for k, v_expected in expected_kvs.items():
             val_str = str(v_expected) if not isinstance(v_expected, bool) else str(v_expected).lower()
             # Use regex to ensure it's a key=value pair and not just a substring
-            if not re.search(rf"\b{re.escape(k)}={re.escape(val_str)}\b", line): return False
+            if not re.search(rf"\b{re.escape(k)}={re.escape(val_str)}\b", line):
+                return False
     return True
 
 def _check_traceback_presence(output: str, expected_traceback: str) -> bool:
@@ -98,11 +111,10 @@ class TestConfigWarnings:
             for part in expected_warning_parts:
                 assert part in captured_err
 
-from pyvider.telemetry import logger as global_logger
 
 
 class TestLoggingWithSemanticLayers:
-    def test_llm_layer_end_to_end(self, setup_pyvider_telemetry_for_test: callable, captured_stderr_for_pyvider: "io.StringIO"):
+    def test_llm_layer_end_to_end(self, setup_pyvider_telemetry_for_test: callable, captured_stderr_for_pyvider: "io.StringIO") -> None:
         config = TelemetryConfig(logging=LoggingConfig(enabled_semantic_layers=["llm"], console_formatter="key_value", das_emoji_prefix_enabled=True, logger_name_emoji_prefix_enabled=False))
         setup_pyvider_telemetry_for_test(config)
         global_logger.info("LLM generated response", **{"llm.provider": "openai", "llm.task": "generation", "llm.model": "gpt-4o", "llm.outcome": "success", "duration_ms": 1230, "llm.output.tokens": 250})
@@ -112,7 +124,7 @@ class TestLoggingWithSemanticLayers:
         assert "llm.output.tokens=250" in output
         assert "llm.provider=openai" not in output
 
-    def test_legacy_das_still_works_if_no_layers_active(self, setup_pyvider_telemetry_for_test: callable, captured_stderr_for_pyvider: "io.StringIO"):
+    def test_legacy_das_still_works_if_no_layers_active(self, setup_pyvider_telemetry_for_test: callable, captured_stderr_for_pyvider: "io.StringIO") -> None:
         config = TelemetryConfig(logging=LoggingConfig(console_formatter="key_value", das_emoji_prefix_enabled=True, logger_name_emoji_prefix_enabled=False))
         setup_pyvider_telemetry_for_test(config)
         global_logger.info("Legacy system test", domain="auth", action="login", status="success")

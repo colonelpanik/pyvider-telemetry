@@ -29,10 +29,14 @@ from pyvider.telemetry.semantic_layers import BUILTIN_SEMANTIC_LAYERS
 
 
 def get_proc_name(proc: Any) -> str:
-    if hasattr(proc, '__name__'): return proc.__name__
-    if isinstance(proc, TimeStamper): return "TimeStamper"
-    if isinstance(proc, JSONRenderer): return "JSONRenderer"
-    if isinstance(proc, ConsoleRenderer): return "ConsoleRenderer"
+    if hasattr(proc, '__name__'):
+        return proc.__name__
+    if isinstance(proc, TimeStamper):
+        return "TimeStamper"
+    if isinstance(proc, JSONRenderer):
+        return "JSONRenderer"
+    if isinstance(proc, ConsoleRenderer):
+        return "ConsoleRenderer"
     return proc.__class__.__name__ if hasattr(proc, '__class__') else str(type(proc))
 
 class TestConfigTimestampProcessors:

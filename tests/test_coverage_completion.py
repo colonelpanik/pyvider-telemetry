@@ -5,13 +5,13 @@
 Additional tests specifically designed to achieve 100% code coverage.
 """
 import asyncio
+from collections.abc import Callable
 import io
 import logging as stdlib_logging
 import os
 import sys
 import threading
-from typing import Callable
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import structlog
@@ -36,7 +36,6 @@ from pyvider.telemetry.logger.custom_processors import (
 )
 from pyvider.telemetry.logger.emoji_matrix import show_emoji_matrix
 from pyvider.telemetry.types import (
-    TRACE_LEVEL_NUM,
     LogLevelStr,
 )
 
@@ -127,11 +126,15 @@ def test_emoji_computation_edge_cases() -> None:
     assert _compute_emoji_for_logger_name("completely.unknown") == "🔹"
 
 def test_concurrent_setup_and_reset() -> None:
-    def setup_worker(): setup_telemetry(TelemetryConfig(service_name="concurrent_test"))
-    def reset_worker(): reset_pyvider_setup_for_testing()
+    def setup_worker() -> None:
+        setup_telemetry(TelemetryConfig(service_name="concurrent_test"))
+    def reset_worker() -> None:
+        reset_pyvider_setup_for_testing()
     threads = [threading.Thread(target=setup_worker if i % 2 == 0 else reset_worker) for i in range(4)]
-    for t in threads: t.start()
-    for t in threads: t.join()
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
 
 def test_stream_testing_functions() -> None:
     test_stream = io.StringIO()
@@ -149,17 +152,23 @@ def test_complex_nested_logger_names() -> None:
 
 def test_exception_logging_edge_cases() -> None:
     setup_telemetry()
-    try: raise ValueError("Test")
-    except ValueError: logger.exception("Error %d", 5, operation="test")
-    try: raise ConnectionError("Connection failed")
-    except ConnectionError: logger.exception("Connection error", domain="network", action="connect", status="error")
+    try:
+        raise ValueError("Test")
+    except ValueError:
+        logger.exception("Error %d", 5, operation="test")
+    try:
+        raise ConnectionError("Connection failed")
+    except ConnectionError:
+        logger.exception("Connection error", domain="network", action="connect", status="error")
 
 @pytest.mark.asyncio
 async def test_async_logging_edge_cases() -> None:
     setup_telemetry()
-    async def task():
-        try: raise RuntimeError("Async task failed")
-        except RuntimeError: logger.exception("Async task exception", task_id="async_001")
+    async def task() -> None:
+        try:
+            raise RuntimeError("Async task failed")
+        except RuntimeError:
+            logger.exception("Async task exception", task_id="async_001")
     await task()
 
 def test_warning_alias() -> None:

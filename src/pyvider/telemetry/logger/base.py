@@ -43,7 +43,8 @@ class PyviderLogger:
                 with _LAZY_SETUP_LOCK:
                     _LAZY_SETUP_STATE["done"] = True
                 return True
-        except Exception: pass
+        except Exception:
+            pass
         return False
 
     def _ensure_configured(self) -> None:
@@ -119,7 +120,8 @@ class PyviderLogger:
 
     def _format_message_with_args(self, event: str | Any, args: tuple[Any, ...]) -> str:
         event_str = str(event) if event is not None else ""
-        if not args: return event_str
+        if not args:
+            return event_str
         try:
             return event_str % args
         except (TypeError, ValueError, KeyError):

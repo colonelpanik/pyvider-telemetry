@@ -2,9 +2,9 @@
 """
 Tests for utility functions in pyvider.telemetry.utils.
 """
+from collections.abc import Callable
 import io
 import re
-from typing import Callable
 
 import pytest
 
@@ -13,32 +13,29 @@ from pyvider.telemetry import (
     TelemetryConfig,
     logger as global_logger,
 )
-from pyvider.telemetry.core import reset_pyvider_setup_for_testing
-from pyvider.telemetry.utils import timed_block, _PYVIDER_CONTEXT_TRACE_ID
+from pyvider.telemetry.utils import _PYVIDER_CONTEXT_TRACE_ID, timed_block
+
 
 def parse_kv_log_line(line: str) -> dict:
     """A robust parser for key=value log lines that handles emojis and spaces in messages."""
     # Remove timestamp
     line = re.sub(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}\s+", "", line)
-    
+
     # Extract level
     level_match = re.search(r"\[\s*([a-zA-Z]+)\s*\]", line)
     level = level_match.group(1).lower() if level_match else ""
     content_after_level = line[level_match.end():].strip() if level_match else line
-    
+
     data = {"level": level}
-    
+
     # FIX: Regex now handles single/double quoted strings and unquoted values
     kv_pairs = re.findall(r'([\w.]+)=(".*?"|\'.*?\'|\S+)', content_after_level)
-    
+
     # Find the start of the key-value section to isolate the event message
     first_kv_match = re.search(r'[\w.]+=(".*?"|\'.*?\'|\S+)', content_after_level)
-    
-    if first_kv_match:
-        event_part = content_after_level[:first_kv_match.start()]
-    else:
-        event_part = content_after_level
-        
+
+    event_part = content_after_level[:first_kv_match.start()] if first_kv_match else content_after_level
+
     data["event"] = event_part.strip()
 
     for key, value in kv_pairs:
@@ -103,21 +100,24 @@ class TestTimedBlock:
         assert log_data.get("error.message") == "Simulated error"
 
     def test_log_level_for_outcome(self, captured_stderr_for_pyvider: io.StringIO) -> None:
-        with timed_block(global_logger, "success_op_info_level"): pass
+        with timed_block(global_logger, "success_op_info_level"):
+            pass
         assert "[info " in captured_stderr_for_pyvider.getvalue().lower()
-        
+
         # Clear buffer for next check
         captured_stderr_for_pyvider.seek(0)
         captured_stderr_for_pyvider.truncate(0)
 
         with pytest.raises(RuntimeError):
-            with timed_block(global_logger, "error_op_error_level"): raise RuntimeError("err")
+            with timed_block(global_logger, "error_op_error_level"):
+                raise RuntimeError("err")
         assert "[error " in captured_stderr_for_pyvider.getvalue().lower()
 
     def test_trace_id_from_contextvar(self, captured_stderr_for_pyvider: io.StringIO) -> None:
         token = _PYVIDER_CONTEXT_TRACE_ID.set("test-trace-12345")
         try:
-            with timed_block(global_logger, "op_with_trace_id"): pass
+            with timed_block(global_logger, "op_with_trace_id"):
+                pass
         finally:
             _PYVIDER_CONTEXT_TRACE_ID.reset(token)
         captured = captured_stderr_for_pyvider.getvalue()
@@ -128,7 +128,8 @@ class TestTimedBlock:
     def test_trace_id_from_initial_kvs_overrides_contextvar(self, captured_stderr_for_pyvider: io.StringIO) -> None:
         token = _PYVIDER_CONTEXT_TRACE_ID.set("context-id")
         try:
-            with timed_block(global_logger, "op_override_trace_id", trace_id="kvs-id"): pass
+            with timed_block(global_logger, "op_override_trace_id", trace_id="kvs-id"):
+                pass
         finally:
             _PYVIDER_CONTEXT_TRACE_ID.reset(token)
         captured = captured_stderr_for_pyvider.getvalue()

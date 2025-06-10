@@ -35,10 +35,14 @@ def add_log_level_custom(_logger: Any, method_name: str, event_dict: structlog.t
         event_dict["level"] = level_hint.lower()
     elif "level" not in event_dict:
         match method_name:
-            case "exception": event_dict["level"] = "error"
-            case "warn": event_dict["level"] = "warning"
-            case "msg": event_dict["level"] = "info"
-            case _: event_dict["level"] = method_name.lower()
+            case "exception":
+                event_dict["level"] = "error"
+            case "warn":
+                event_dict["level"] = "warning"
+            case "msg":
+                event_dict["level"] = "info"
+            case _:
+                event_dict["level"] = method_name.lower()
     return event_dict
 
 class _LevelFilter:
@@ -82,8 +86,10 @@ _EMOJI_CACHE_SIZE_LIMIT: int = 1000
 
 def _compute_emoji_for_logger_name(logger_name: str) -> str:
     for keyword in _SORTED_LOGGER_NAME_EMOJI_KEYWORDS:
-        if keyword == 'default': continue
-        if logger_name.startswith(keyword): return _LOGGER_NAME_EMOJI_PREFIXES[keyword]
+        if keyword == 'default':
+            continue
+        if logger_name.startswith(keyword):
+            return _LOGGER_NAME_EMOJI_PREFIXES[keyword]
     return _LOGGER_NAME_EMOJI_PREFIXES.get('default', '🔹')
 
 def add_logger_name_emoji_prefix(_logger: Any, _method_name: str, event_dict: structlog.types.EventDict) -> structlog.types.EventDict:
