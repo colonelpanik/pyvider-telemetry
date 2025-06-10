@@ -282,6 +282,50 @@ logger.trace("Database query details",
             duration_ms=23)
 ```
 
+<!-- NEW SECTION -->
+## ⏱️ Utility Functions
+
+### timed_block()
+
+```python
+def timed_block(
+    logger_instance: "PyviderLogger",
+    event_name: str,
+    layer_keys: dict[str, Any] | None = None,
+    **initial_kvs: Any
+) -> Generator[None, None, None]
+```
+
+**Description**: A context manager to log the duration and outcome of a block of code. It automatically captures the start time, executes the wrapped code block, and then logs an event including the `duration_ms`, `outcome` (success/error), and any initial or error-specific key-value pairs. If an exception occurs, it is logged and then re-raised.
+
+**Parameters**:
+- `logger_instance`: The `pyvider.telemetry.logger` instance to use for logging.
+- `event_name`: A descriptive name for the event/operation being timed.
+- `layer_keys`: Optional dictionary of pre-defined semantic keys relevant to active telemetry layers (e.g., `{"llm.task": "generation"}`). These are merged with `initial_kvs`.
+- `**initial_kvs`: Additional key-value pairs to include in the log entry from the start of the block.
+
+**Example**:
+```python
+from pyvider.telemetry import logger, timed_block
+
+# Example 1: Successful operation
+with timed_block(logger, "database_query", db_table="users", query_type="select"):
+    # ... code to execute database query ...
+    pass
+# Logs: [info] database_query db_table=users query_type=select outcome=success duration_ms=...
+
+# Example 2: Failing operation
+try:
+    with timed_block(logger, "payment_processing", transaction_id="txn_123"):
+        raise RuntimeError("Credit card declined")
+except RuntimeError:
+    # The exception is re-raised by timed_block
+    logger.info("Handling payment failure.")
+
+# Logs: [error] payment_processing transaction_id=txn_123 outcome=error error.message='Credit card declined' error.type=RuntimeError duration_ms=...
+```
+<!-- END NEW SECTION -->
+
 ## 🏛️ Semantic Layer API
 
 Semantic layers provide an extensible, schema-driven way to define structured logging conventions and their corresponding emoji representations.

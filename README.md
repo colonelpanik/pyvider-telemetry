@@ -1,3 +1,10 @@
+You are absolutely right! My apologies for missing that. The `timed_block` context manager is a fantastic utility that definitely deserves to be highlighted in the documentation. It's a great example of how the library provides practical, high-level abstractions.
+
+I will now update both `README.md` and `docs/api-reference.md` to include this feature, integrating it seamlessly into the existing structure.
+
+---
+
+### ###README.md###
 <div align="center">
 
 # 🐍📡 `pyvider.telemetry`
@@ -287,6 +294,30 @@ async def main():
 asyncio.run(main())
 ```
 
+<!-- NEW SECTION -->
+### Timing Code Blocks
+
+Easily log the duration and outcome of any code block using the `timed_block` context manager. It automatically handles success and failure cases.
+
+```python
+import time
+from pyvider.telemetry import logger, timed_block
+
+# Successful operation
+with timed_block(logger, "Data processing task", task_id="abc-123"):
+    time.sleep(0.05)  # Simulate work
+# Output: Data processing task task_id=abc-123 outcome=success duration_ms=50
+
+# Failing operation
+try:
+    with timed_block(logger, "Database query", table="users"):
+        raise ValueError("Connection refused")
+except ValueError:
+    pass # Exception is re-raised and caught here
+# Output: Database query table=users outcome=error error.message='Connection refused' error.type=ValueError duration_ms=...
+```
+<!-- END NEW SECTION -->
+
 ### Production Configuration
 
 ```python
@@ -343,3 +374,4 @@ This project is licensed under the **Apache 2.0 License**. See the [LICENSE](LIC
 - Boilerplate and repetitive code generation
 
 This approach allows us to leverage AI capabilities for productivity while maintaining human control over critical technical decisions and quality assurance.
+
